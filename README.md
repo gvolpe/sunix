@@ -182,7 +182,7 @@ The SUNix cli can also be used to get a Markdown report for Pull Requests:
 ```console
 nix build --print-out-paths --no-link \
   .#nixosConfigurations.<nixos_flake>.config.system.build.toplevel \
-  | xargs dix /run/current-system/ \
+  | xargs dix --output json /run/current-system/ \
   | sunix --markdown-report "NixOS .#<nixos_flake>"
 ```
 
@@ -191,7 +191,8 @@ nix build --print-out-paths --no-link \
 ```console
 nix build --print-out-paths --no-link \
   .#homeConfigurations.<home_flake>.activationPackage \
-  | xargs -r dix (readlink -f "$XDG_STATE_HOME/nix/profiles/home-manager")
+  | xargs -r dix --output json (readlink -f "$XDG_STATE_HOME/nix/profiles/home-manager")
+  | sunix --markdown-report "Home Manager .#<home_flake>"
 ```
 
 ## DISCLAIMER
