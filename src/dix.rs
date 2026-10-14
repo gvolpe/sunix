@@ -94,7 +94,7 @@ fn build_diff_report(
     flake: &str,
     logs: Option<&mpsc::Sender<String>>,
 ) -> Result<UpdateReport, String> {
-    let output_paths = nix_build_output_paths(attr, flake_dir, logs)?;
+    let output_paths = nix_build_output_paths(config, attr, flake_dir, logs)?;
 
     let dix_binary = dix_binary(config);
     let dix_output = run_command(
@@ -114,6 +114,7 @@ fn build_diff_report(
 }
 
 fn nix_build_output_paths(
+    config: &SunixConfig,
     attr: &str,
     flake_dir: &Path,
     logs: Option<&mpsc::Sender<String>>,
@@ -123,6 +124,10 @@ fn nix_build_output_paths(
         .arg("build")
         .arg("--print-out-paths")
         .arg("--no-link")
+        .arg("--override-input")
+        .arg(&config.nixpkgs_input)
+        .arg(&config.nixpkgs_url)
+        .arg("--refresh")
         .arg(attr);
 
     let output = run_command_with_logs(

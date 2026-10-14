@@ -29,6 +29,11 @@ fn main() -> glib::ExitCode {
         return glib::ExitCode::SUCCESS;
     }
 
+    if options.version {
+        println!("sunix {}", env!("CARGO_PKG_VERSION"));
+        return glib::ExitCode::SUCCESS;
+    }
+
     if let Some(report) = options.report {
         return match write_report_from_stdin(report) {
             Ok(()) => glib::ExitCode::SUCCESS,

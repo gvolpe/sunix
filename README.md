@@ -103,15 +103,28 @@ The Home Manager configuration is built via:
 
 ```console
 nix build --print-out-paths --no-link \
-  homeConfigurations.<home_flake>.activationPackage
+  --override-input nixpkgs "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst" \
+  --refresh \
+  .#homeConfigurations.<home_flake>.activationPackage
 ```
 
 Whereas the NixOS configuration is built via:
 
 ```console
 nix build --print-out-paths --no-link \
-  nixosConfigurations.<nixos_flake>.config.system.build.toplevel
+  --override-input nixpkgs "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst" \
+  --refresh \
+  .#nixosConfigurations.<nixos_flake>.config.system.build.toplevel
 ```
+
+Both builds refresh fetched inputs and override the configured `nixpkgs` input. These optional fields set the input name and replacement flake reference (shown with their defaults):
+
+```toml
+nixpkgs_input=nixpkgs
+nixpkgs_url=https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst
+```
+
+Unset or empty values use the defaults. In the Home Manager module, configure these as `programs.sunix.settings.nixpkgsInput` and `programs.sunix.settings.nixpkgsUrl`.
 
 ### Diff
 
@@ -180,7 +193,8 @@ nix build --print-out-paths --no-link \
 The SUNix cli can also be used to get a Markdown report for Pull Requests:
 
 ```console
-nix build --print-out-paths --no-link \
+nix build --print-out-paths --no-link --refresh \
+  --override-input nixpkgs "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst" \
   .#nixosConfigurations.<nixos_flake>.config.system.build.toplevel \
   | xargs dix --output json /run/current-system/ \
   | sunix --markdown-report "NixOS .#<nixos_flake>"
@@ -189,7 +203,8 @@ nix build --print-out-paths --no-link \
 ### Home Manager
 
 ```console
-nix build --print-out-paths --no-link \
+nix build --print-out-paths --no-link --refresh \
+  --override-input nixpkgs "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst" \
   .#homeConfigurations.<home_flake>.activationPackage \
   | xargs -r dix --output json (readlink -f "$XDG_STATE_HOME/nix/profiles/home-manager")
   | sunix --markdown-report "Home Manager .#<home_flake>"

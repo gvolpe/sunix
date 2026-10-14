@@ -10,6 +10,8 @@ pub struct SunixConfig {
     pub nixos_flake_dir: Option<PathBuf>,
     pub home_flake: String,
     pub nixos_flake: String,
+    pub nixpkgs_input: String,
+    pub nixpkgs_url: String,
     pub dix_binary: Option<PathBuf>,
     pub style_css: Option<PathBuf>,
     pub show_demo: bool,
@@ -76,6 +78,12 @@ fn parse_config(content: &str, source: &Path) -> Result<SunixConfig, String> {
     let nixos_flake_dir = optional_path_field(&values, "nixos_flake_dir");
     let home_flake = required_field(&values, "home_flake", source)?;
     let nixos_flake = required_field(&values, "nixos_flake", source)?;
+    let nixpkgs_input = default_string_field(&values, "nixpkgs_input", "nixpkgs");
+    let nixpkgs_url = default_string_field(
+        &values,
+        "nixpkgs_url",
+        "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst",
+    );
     let dix_binary = optional_path_field(&values, "dix_binary");
     let style_css = optional_path_field(&values, "style_css");
     let show_demo = optional_bool_field(&values, "show_demo", source)?;
@@ -86,6 +94,8 @@ fn parse_config(content: &str, source: &Path) -> Result<SunixConfig, String> {
         nixos_flake_dir,
         home_flake,
         nixos_flake,
+        nixpkgs_input,
+        nixpkgs_url,
         dix_binary,
         style_css,
         show_demo,
@@ -108,6 +118,15 @@ fn required_field(
             source.display()
         )),
     }
+}
+
+fn default_string_field(values: &HashMap<String, String>, field: &str, default: &str) -> String {
+    values
+        .get(field)
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .unwrap_or(default)
+        .to_owned()
 }
 
 fn optional_path_field(values: &HashMap<String, String>, field: &str) -> Option<PathBuf> {
@@ -194,6 +213,37 @@ fn expand_home_path(value: &str) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn defaults_nixpkgs_override_when_missing_or_empty() {
+        for optional_fields in ["", "nixpkgs_input=\nnixpkgs_url=\n"] {
+            let config = parse_config(
+                &format!(
+                    "flake_dir=/tmp/flake\nhome_flake=home\nnixos_flake=host\n{optional_fields}"
+                ),
+                Path::new("sunix.toml"),
+            )
+            .unwrap();
+
+            assert_eq!(config.nixpkgs_input, "nixpkgs");
+            assert_eq!(
+                config.nixpkgs_url,
+                "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst"
+            );
+        }
+    }
+
+    #[test]
+    fn parses_custom_nixpkgs_override() {
+        let config = parse_config(
+            "flake_dir=/tmp/flake\nhome_flake=home\nnixos_flake=host\nnixpkgs_input='nixpkgs-unstable'\nnixpkgs_url=\"github:NixOS/nixpkgs/nixos-unstable\"\n",
+            Path::new("sunix.toml"),
+        )
+        .unwrap();
+
+        assert_eq!(config.nixpkgs_input, "nixpkgs-unstable");
+        assert_eq!(config.nixpkgs_url, "github:NixOS/nixpkgs/nixos-unstable");
+    }
 
     #[test]
     fn parses_required_fields_from_bare_values() {

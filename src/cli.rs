@@ -2,6 +2,7 @@
 pub struct CliOptions {
     pub demo: bool,
     pub help: bool,
+    pub version: bool,
     pub report: Option<CliReport>,
 }
 
@@ -22,6 +23,7 @@ impl CliOptions {
         let mut options = Self {
             demo: false,
             help: false,
+            version: false,
             report: None,
         };
 
@@ -30,6 +32,7 @@ impl CliOptions {
             match arg.as_str() {
                 "--demo" => options.demo = true,
                 "-h" | "--help" => options.help = true,
+                "--version" => options.version = true,
                 "--markdown-report" => {
                     options.set_report(CliReportFormat::Markdown, &arg, args.next())?;
                 }
@@ -72,7 +75,7 @@ impl CliOptions {
 }
 
 pub fn usage() -> &'static str {
-    "Usage: sunix [--demo]\n       sunix --markdown-report <title>\n       sunix --pdf-report <title>\n\nOptions:\n  --demo                     Show the Demo button regardless of show_demo config\n  --markdown-report <title>  Read dix JSON from stdin and write a Markdown report to stdout\n  --pdf-report <title>       Read dix JSON from stdin and write a PDF report to stdout\n  -h, --help                 Show this help"
+    "Usage: sunix [--demo]\n       sunix --markdown-report <title>\n       sunix --pdf-report <title>\n\nOptions:\n  --demo                     Show the Demo button regardless of show_demo config\n  --markdown-report <title>  Read dix JSON from stdin and write a Markdown report to stdout\n  --pdf-report <title>       Read dix JSON from stdin and write a PDF report to stdout\n  --version                  Show the version\n  -h, --help                 Show this help"
 }
 
 #[cfg(test)]
@@ -86,6 +89,7 @@ mod tests {
             CliOptions {
                 demo: false,
                 help: false,
+                version: false,
                 report: None,
             }
         );
@@ -98,6 +102,7 @@ mod tests {
             CliOptions {
                 demo: true,
                 help: false,
+                version: false,
                 report: None,
             }
         );
@@ -110,6 +115,7 @@ mod tests {
             CliOptions {
                 demo: false,
                 help: true,
+                version: false,
                 report: None,
             }
         );
@@ -118,6 +124,7 @@ mod tests {
             CliOptions {
                 demo: false,
                 help: true,
+                version: false,
                 report: None,
             }
         );
@@ -131,6 +138,7 @@ mod tests {
             CliOptions {
                 demo: false,
                 help: false,
+                version: false,
                 report: Some(CliReport {
                     format: CliReportFormat::Markdown,
                     title: "NixOS .#aorus".to_owned(),
@@ -150,12 +158,20 @@ mod tests {
             CliOptions {
                 demo: false,
                 help: false,
+                version: false,
                 report: Some(CliReport {
                     format: CliReportFormat::Pdf,
                     title: "Home Manager .#niri".to_owned(),
                 }),
             }
         );
+    }
+
+    #[test]
+    fn parses_version_option() {
+        let options = CliOptions::parse(["--version".to_string()]).unwrap();
+        assert!(options.version);
+        assert!(usage().contains("--version"));
     }
 
     #[test]

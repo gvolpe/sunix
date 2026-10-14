@@ -17,6 +17,8 @@ let
     nixos_flake_dir = settings.nixosFlakeDir;
     home_flake = settings.homeFlake;
     nixos_flake = settings.nixosFlake;
+    nixpkgs_input = settings.nixpkgsInput;
+    nixpkgs_url = settings.nixpkgsUrl;
     dix_binary = settings.dixBinary;
     style_css = settings.styleCss;
     show_demo = settings.showDemo;
@@ -72,6 +74,20 @@ in
         description = "NixOS flake output name.";
       };
 
+      nixpkgsInput = lib.mkOption {
+        type = lib.types.str;
+        default = "nixpkgs";
+        example = "nixpkgs-unstable";
+        description = "Flake input name to override for Home Manager and NixOS builds.";
+      };
+
+      nixpkgsUrl = lib.mkOption {
+        type = lib.types.str;
+        default = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
+        example = "github:NixOS/nixpkgs/nixos-unstable";
+        description = "Flake reference used to override the nixpkgs input when building reports.";
+      };
+
       dixBinary = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
@@ -118,6 +134,14 @@ in
       {
         assertion = settings.nixosFlake != "";
         message = "programs.sunix.settings.nixosFlake must not be empty.";
+      }
+      {
+        assertion = settings.nixpkgsInput != "";
+        message = "programs.sunix.settings.nixpkgsInput must not be empty.";
+      }
+      {
+        assertion = settings.nixpkgsUrl != "";
+        message = "programs.sunix.settings.nixpkgsUrl must not be empty.";
       }
       {
         assertion = settings.dixBinary == null || settings.dixBinary != "";

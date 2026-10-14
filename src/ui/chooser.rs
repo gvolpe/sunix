@@ -44,7 +44,14 @@ fn chooser(window: &gtk::ApplicationWindow, root: &gtk::Box, state: Rc<AppState>
     content.set_valign(gtk::Align::Center);
 
     let title = label(APP_TITLE, &["title", "chooser-title"], 0.5);
-    content.append(&title);
+    let heading = gtk::Box::new(gtk::Orientation::Vertical, 4);
+    heading.append(&title);
+    heading.append(&label(
+        concat!("v", env!("CARGO_PKG_VERSION")),
+        &["subtitle", "chooser-version"],
+        0.5,
+    ));
+    content.append(&heading);
 
     let buttons = gtk::Box::new(gtk::Orientation::Horizontal, 16);
     buttons.add_css_class("chooser-buttons");
