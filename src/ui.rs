@@ -21,7 +21,7 @@ use navigation::connect_keyboard_shortcuts;
 use state::AppState;
 
 const APP_ID: &str = "com.gvolpe.Sunix";
-const APP_TITLE: &str = "Software Updates for Nix (SUNix)";
+const APP_TITLE: &str = "Software Updates for Nix";
 const CHOOSER_MIN_WINDOW_WIDTH: i32 = 520;
 const CHOOSER_MIN_WINDOW_HEIGHT: i32 = 220;
 const CHOOSER_WINDOW_WIDTH: i32 = 720;
