@@ -7,11 +7,13 @@ use std::time::Duration;
 use gtk::gdk;
 use gtk::prelude::*;
 
+use crate::build_plan::{BuildPlan, build_plan};
 use crate::config::SunixConfig;
 use crate::dix::{demo_report, home_manager_report_with_logs, nixos_report_with_logs};
 use crate::model::UpdateReport;
 
 use super::APP_TITLE;
+use super::build_plan::show_build_plan;
 use super::chooser::show_chooser;
 use super::messages::{show_config_error, show_loading_message, show_report_error};
 use super::report::show_report;
@@ -99,21 +101,23 @@ pub(super) fn connect_keyboard_shortcuts(
         }
 
         if key_matches(keyval, 'm') {
-            open_report_source(
+            open_source(
                 &shortcut_window,
                 &shortcut_root,
                 Rc::clone(&shortcut_state),
                 ReportSource::HomeManager,
+                modifiers.contains(gdk::ModifierType::SHIFT_MASK),
             );
             return gtk::glib::Propagation::Stop;
         }
 
         if key_matches(keyval, 'n') {
-            open_report_source(
+            open_source(
                 &shortcut_window,
                 &shortcut_root,
                 Rc::clone(&shortcut_state),
                 ReportSource::NixOS,
+                modifiers.contains(gdk::ModifierType::SHIFT_MASK),
             );
             return gtk::glib::Propagation::Stop;
         }
@@ -145,7 +149,10 @@ fn key_matches(keyval: gdk::Key, expected: char) -> bool {
 }
 
 fn navigate_back(window: &gtk::ApplicationWindow, root: &gtk::Box, state: Rc<AppState>) {
-    if !matches!(state.view(), ViewState::Report | ViewState::Message) {
+    if !matches!(
+        state.view(),
+        ViewState::Report | ViewState::BuildPlan | ViewState::Message
+    ) {
         return;
     }
 
@@ -160,12 +167,34 @@ fn open_report_source(
     state: Rc<AppState>,
     source: ReportSource,
 ) {
-    if state.view() == ViewState::Loading {
+    open_source(window, root, state, source, false);
+}
+
+pub(super) fn connect_plan_button(
+    button: &gtk::Button,
+    window: &gtk::ApplicationWindow,
+    root: &gtk::Box,
+    state: Rc<AppState>,
+    source: ReportSource,
+) {
+    let window = window.clone();
+    let root = root.clone();
+    button.connect_clicked(move |_| open_source(&window, &root, Rc::clone(&state), source, true));
+}
+
+fn open_source(
+    window: &gtk::ApplicationWindow,
+    root: &gtk::Box,
+    state: Rc<AppState>,
+    source: ReportSource,
+    plan: bool,
+) {
+    if state.view() == ViewState::Loading || (plan && !state.build_plans_enabled()) {
         return;
     }
 
     defer_view_switch(window, root, move |window, root| {
-        show_report_source(window, root, state, source);
+        show_report_source(window, root, state, source, plan);
     });
 }
 
@@ -174,19 +203,23 @@ fn show_report_source(
     root: &gtk::Box,
     state: Rc<AppState>,
     source: ReportSource,
+    plan: bool,
 ) {
+    if state.view() == ViewState::Loading {
+        return;
+    }
     if matches!(source, ReportSource::Demo) {
         show_report(window, root, state, source, demo_report());
         return;
     }
 
-    if let Some(report) = state.cached_report(source) {
+    if let Some(report) = state.cached_report(source).filter(|_| !plan) {
         show_report(window, root, state, source, report);
         return;
     }
 
     match state.clone_config() {
-        Ok(config) => show_report_loading(window, root, state, source, config),
+        Ok(config) => show_report_loading(window, root, state, source, config, plan),
         Err(message) => show_config_error(window, root, &message),
     }
 }
@@ -206,19 +239,26 @@ fn show_report_loading(
     state: Rc<AppState>,
     source: ReportSource,
     config: SunixConfig,
+    plan: bool,
 ) {
     state.set_view(ViewState::Loading);
     state.clear_scroll_adjustment();
     let flake = source.flake(&config).to_owned();
-    let loading_log = show_loading_message(window, root, APP_TITLE, source, &flake);
+    let loading_log = show_loading_message(window, root, APP_TITLE, source, &flake, plan);
 
     let (report_sender, report_receiver) = mpsc::channel();
     let (log_sender, log_receiver) = mpsc::channel();
     thread::spawn(move || {
-        let report = match source {
-            ReportSource::HomeManager => home_manager_report_with_logs(&config, log_sender),
-            ReportSource::NixOS => nixos_report_with_logs(&config, log_sender),
-            ReportSource::Demo => Ok(demo_report()),
+        let report = if plan {
+            build_plan(&config, source == ReportSource::HomeManager, log_sender)
+                .map(LoadedView::Plan)
+        } else {
+            match source {
+                ReportSource::HomeManager => home_manager_report_with_logs(&config, log_sender),
+                ReportSource::NixOS => nixos_report_with_logs(&config, log_sender),
+                ReportSource::Demo => Ok(demo_report()),
+            }
+            .map(LoadedView::Report)
         };
         let _ = report_sender.send(report);
     });
@@ -239,8 +279,12 @@ fn show_report_loading(
         }
 
         match report_receiver.try_recv() {
-            Ok(Ok(report)) => {
+            Ok(Ok(LoadedView::Report(report))) => {
                 cache_report_and_show(&window, &root, Rc::clone(&state), source, report);
+                gtk::glib::ControlFlow::Break
+            }
+            Ok(Ok(LoadedView::Plan(plan))) => {
+                show_build_plan(&window, &root, Rc::clone(&state), source, &flake, plan);
                 gtk::glib::ControlFlow::Break
             }
             Ok(Err(message)) => {
@@ -253,12 +297,21 @@ fn show_report_loading(
                     &window,
                     &root,
                     Rc::clone(&state),
-                    source.disconnected_message(),
+                    if plan {
+                        "Build plan worker error"
+                    } else {
+                        source.disconnected_message()
+                    },
                 );
                 gtk::glib::ControlFlow::Break
             }
         }
     });
+}
+
+enum LoadedView {
+    Report(UpdateReport),
+    Plan(BuildPlan),
 }
 
 fn cache_report_and_show(

@@ -4,7 +4,7 @@
 [![rust-badge](https://img.shields.io/static/v1?label=Powered%20by&message=Rust&color=orange&style=flat&logo=rust&link=https://nixos.org&labelColor=111212)](https://gvolpe.com)
 [![Build](https://github.com/gvolpe/sunix/actions/workflows/ci.yml/badge.svg)](https://github.com/gvolpe/sunix/actions/workflows/ci.yml)
 
-A small GTK4 layer-shell popup for Wayland compositors that support `wlr-layer-shell`. It shows the expected changes before a NixOS or Home Manager switch is applied, using [dix](https://github.com/manic-systems/dix) under the hood.
+A small GTK4 layer-shell popup for Wayland compositors that support `wlr-layer-shell`. It shows the expected changes before a NixOS or Home Manager switch is applied, using [dix](https://github.com/manic-systems/dix) under the hood. Build plans are also supported (`nix build --dry-run`) to avoid full builds.
 
 https://github.com/user-attachments/assets/1b0a44e9-10f1-437d-b008-88946b9c50a1
 
@@ -33,6 +33,7 @@ modules = [ inputs.sunix.homeModules.default ];
       nixosFlake = "aorus";
       styleCss = null;
       showDemo = false;
+      enableBuildPlans = true;
     };
   };
 }
@@ -52,6 +53,7 @@ SUNix can be fully used via the following keyboard shortcuts:
 
 - `M`: build or show the Home Manager report.
 - `N`: build or show the NixOS report.
+- `Shift+M` / `Shift+N`: preview the Home Manager / NixOS build plan when `enable_build_plans=true`.
 - `D`: show the bundled Demo report when `show_demo=true`.
 - `Up` / `K`: scroll up in the active report or error output.
 - `Down` / `J`: scroll down in the active report or error output.
@@ -61,6 +63,8 @@ SUNix can be fully used via the following keyboard shortcuts:
 - `Esc`: close the popup.
 
 Reports are cached during the same SUNix session, so reports aren't re-evaluated unless the program is restarted.
+
+Build plans are disabled by default. Set `enable_build_plans=true` in `sunix.toml`, or `programs.sunix.settings.enableBuildPlans = true` in Home Manager, to reveal a **Build plan** button under each configuration and enable the plan shortcuts. This UI-only preview runs `nix build --dry-run` with the same nixpkgs override as the full report, showing derivations to build, paths to download, and download/unpacked size estimates. It includes build dependencies and omits paths already available locally; it is a quick option to avoid full builds. Plans are evaluated on each opening and can be refreshed. Use **Full report** to build the generation and view its package changes (or reopen its cached report).
 
 ### Exports
 

@@ -28,6 +28,7 @@ pub(super) enum ViewState {
     Chooser,
     Loading,
     Report,
+    BuildPlan,
     Message,
 }
 
@@ -71,7 +72,10 @@ impl AppState {
     }
 
     pub(super) fn scroll_active_view(&self, direction: f64) -> bool {
-        if !matches!(self.view(), ViewState::Report | ViewState::Message) {
+        if !matches!(
+            self.view(),
+            ViewState::Report | ViewState::BuildPlan | ViewState::Message
+        ) {
             return false;
         }
 
@@ -120,6 +124,12 @@ impl AppState {
 
         popover.popdown();
         true
+    }
+
+    pub(super) fn build_plans_enabled(&self) -> bool {
+        self.config
+            .as_ref()
+            .is_ok_and(|config| config.enable_build_plans)
     }
 
     pub(super) fn show_demo_enabled(&self) -> bool {

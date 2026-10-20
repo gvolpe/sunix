@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use gtk::prelude::*;
 
-use super::navigation::connect_report_button;
+use super::navigation::{connect_plan_button, connect_report_button};
 use super::state::{AppState, ReportSource, ViewState};
 use super::widgets::{chooser_button, chooser_key_hints, clear_view, label};
 use super::{
@@ -11,16 +11,10 @@ use super::{
 };
 
 pub(super) fn show_chooser(window: &gtk::ApplicationWindow, root: &gtk::Box, state: Rc<AppState>) {
-    let height = if state.show_demo_enabled() {
-        CHOOSER_WINDOW_HEIGHT + 80
-    } else {
-        CHOOSER_WINDOW_HEIGHT
-    };
-    let min_height = if state.show_demo_enabled() {
-        CHOOSER_MIN_WINDOW_HEIGHT + 80
-    } else {
-        CHOOSER_MIN_WINDOW_HEIGHT
-    };
+    let extra_height =
+        80 * (i32::from(state.show_demo_enabled()) + i32::from(state.build_plans_enabled()));
+    let height = CHOOSER_WINDOW_HEIGHT + extra_height;
+    let min_height = CHOOSER_MIN_WINDOW_HEIGHT + extra_height;
     window.set_default_size(CHOOSER_WINDOW_WIDTH, height);
     window.set_size_request(CHOOSER_MIN_WINDOW_WIDTH, min_height);
 
@@ -70,8 +64,22 @@ fn chooser(window: &gtk::ApplicationWindow, root: &gtk::Box, state: Rc<AppState>
     );
     connect_report_button(&nixos, window, root, Rc::clone(&state), ReportSource::NixOS);
 
-    buttons.append(&home_manager);
-    buttons.append(&nixos);
+    for (report, source, shortcut) in [
+        (home_manager, ReportSource::HomeManager, "Shift+M"),
+        (nixos, ReportSource::NixOS, "Shift+N"),
+    ] {
+        let column = gtk::Box::new(gtk::Orientation::Vertical, 8);
+        column.append(&report);
+        if state.build_plans_enabled() {
+            let plan = gtk::Button::with_label("Build plan");
+            plan.add_css_class("plan-button");
+            plan.set_tooltip_text(Some(&format!("Preview builds and downloads ({shortcut})")));
+            plan.set_focus_on_click(false);
+            connect_plan_button(&plan, window, root, Rc::clone(&state), source);
+            column.append(&plan);
+        }
+        buttons.append(&column);
+    }
     content.append(&buttons);
 
     if show_demo {
@@ -83,6 +91,9 @@ fn chooser(window: &gtk::ApplicationWindow, root: &gtk::Box, state: Rc<AppState>
     }
 
     chooser.append(&content);
+    if state.build_plans_enabled() {
+        chooser.append(&super::widgets::plan_key_hints());
+    }
     chooser.append(&chooser_key_hints(show_demo));
 
     chooser

@@ -51,6 +51,77 @@ window.update-popup {
   border-color: rgba(158, 197, 255, 0.42);
 }
 
+.plan-button {
+  background-color: rgba(82, 145, 224, 0.09);
+  border: 1px solid rgba(158, 197, 255, 0.22);
+  border-radius: 6px;
+  color: #9ec5ff;
+  font-size: 16px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0 16px;
+}
+
+.plan-button:hover {
+  background-color: rgba(82, 145, 224, 0.18);
+  border-color: rgba(158, 197, 255, 0.42);
+}
+
+.plan-note {
+  color: #aeb7c2;
+  font-size: 16px;
+  margin-top: 14px;
+}
+
+.plan-summary {
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.plan-card {
+  background-color: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(222, 226, 230, 0.12);
+  border-radius: 8px;
+  padding: 16px 22px;
+}
+
+.plan-count {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.plan-card-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.plan-build { color: #ffd39e; }
+.plan-download { color: #9ec5ff; }
+.plan-unknown { color: #ffb3b3; }
+
+.plan-estimate {
+  color: #aeb7c2;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.plan-content { padding: 16px 4px; }
+.plan-section-title { font-size: 22px; font-weight: 800; }
+
+.plan-path-list {
+  background-color: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(222, 226, 230, 0.10);
+  border-radius: 6px;
+}
+
+.plan-path-row { padding: 12px 18px; }
+.plan-path-row + .plan-path-row { border-top: 1px solid rgba(222, 226, 230, 0.07); }
+.plan-package-name { font-size: 18px; font-weight: 700; }
+.plan-package-path { color: #8d98a6; font-family: monospace; font-size: 13px; }
+.plan-details { color: #aeb7c2; font-size: 16px; }
+.plan-output { font-family: monospace; font-size: 13px; padding: 16px 0; }
+.plan-empty { padding: 36px 16px; }
+
 .key-hints {
   margin-top: 18px;
 }

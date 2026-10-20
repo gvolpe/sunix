@@ -4,6 +4,7 @@ use gtk::glib;
 
 use crate::cli::{CliReport, CliReportFormat};
 
+mod build_plan;
 mod cli;
 mod command;
 mod config;

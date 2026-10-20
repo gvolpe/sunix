@@ -7,6 +7,7 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 use crate::config::SunixConfig;
 
+mod build_plan;
 mod chooser;
 mod export;
 mod messages;

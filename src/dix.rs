@@ -119,19 +119,11 @@ fn nix_build_output_paths(
     flake_dir: &Path,
     logs: Option<&mpsc::Sender<String>>,
 ) -> Result<Vec<String>, String> {
-    let mut command = Command::new("nix");
-    command
-        .arg("build")
-        .arg("--print-out-paths")
-        .arg("--no-link")
-        .arg("--override-input")
-        .arg(&config.nixpkgs_input)
-        .arg(&config.nixpkgs_url)
-        .arg("--refresh")
-        .arg(attr);
+    let mut command = nix_build_command(config, attr, flake_dir);
+    command.arg("--print-out-paths");
 
     let output = run_command_with_logs(
-        command.current_dir(flake_dir),
+        &mut command,
         &format!("nix build {attr} in {}", flake_dir.display()),
         logs,
     )?;
@@ -148,6 +140,20 @@ fn nix_build_output_paths(
     }
 
     Ok(output_paths)
+}
+
+pub(crate) fn nix_build_command(config: &SunixConfig, attr: &str, flake_dir: &Path) -> Command {
+    let mut command = Command::new("nix");
+    command
+        .arg("build")
+        .arg("--no-link")
+        .arg("--override-input")
+        .arg(&config.nixpkgs_input)
+        .arg(&config.nixpkgs_url)
+        .arg("--refresh")
+        .arg(attr)
+        .current_dir(flake_dir);
+    command
 }
 
 fn current_home_manager_generation_path() -> Result<PathBuf, String> {

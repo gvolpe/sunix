@@ -22,6 +22,7 @@ let
     dix_binary = settings.dixBinary;
     style_css = settings.styleCss;
     show_demo = settings.showDemo;
+    enable_build_plans = settings.enableBuildPlans;
   };
 in
 {
@@ -103,6 +104,12 @@ in
           Path to a custom GTK CSS file to use instead of SUNix's bundled
           stylesheet.
         '';
+      };
+
+      enableBuildPlans = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to enable build plan buttons and keyboard shortcuts in the UI.";
       };
 
       showDemo = lib.mkOption {

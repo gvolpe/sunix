@@ -15,6 +15,7 @@ pub struct SunixConfig {
     pub dix_binary: Option<PathBuf>,
     pub style_css: Option<PathBuf>,
     pub show_demo: bool,
+    pub enable_build_plans: bool,
 }
 
 impl SunixConfig {
@@ -87,6 +88,7 @@ fn parse_config(content: &str, source: &Path) -> Result<SunixConfig, String> {
     let dix_binary = optional_path_field(&values, "dix_binary");
     let style_css = optional_path_field(&values, "style_css");
     let show_demo = optional_bool_field(&values, "show_demo", source)?;
+    let enable_build_plans = optional_bool_field(&values, "enable_build_plans", source)?;
 
     Ok(SunixConfig {
         flake_dir: expand_home_path(&flake_dir),
@@ -99,6 +101,7 @@ fn parse_config(content: &str, source: &Path) -> Result<SunixConfig, String> {
         dix_binary,
         style_css,
         show_demo,
+        enable_build_plans,
     })
 }
 
@@ -213,6 +216,34 @@ fn expand_home_path(value: &str) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_build_plan_opt_in() {
+        for (setting, expected) in [
+            ("", false),
+            ("enable_build_plans=", false),
+            ("enable_build_plans=false", false),
+            ("enable_build_plans=true", true),
+            ("enable_build_plans='true' # enabled", true),
+        ] {
+            let config = parse_config(
+                &format!("flake_dir=/tmp/flake\nhome_flake=home\nnixos_flake=host\n{setting}\n"),
+                Path::new("sunix.toml"),
+            )
+            .unwrap();
+            assert_eq!(config.enable_build_plans, expected, "{setting}");
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_build_plan_opt_in() {
+        let error = parse_config(
+            "flake_dir=/tmp/flake\nhome_flake=home\nnixos_flake=host\nenable_build_plans=yes\n",
+            Path::new("sunix.toml"),
+        )
+        .unwrap_err();
+        assert!(error.contains("invalid optional `enable_build_plans` value `yes`"));
+    }
 
     #[test]
     fn defaults_nixpkgs_override_when_missing_or_empty() {

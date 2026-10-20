@@ -43,6 +43,7 @@ pub(super) fn show_loading_message(
     title: &str,
     source: ReportSource,
     flake: &str,
+    build_plan: bool,
 ) -> LoadingLog {
     window.set_default_size(MESSAGE_WINDOW_WIDTH, MESSAGE_WINDOW_HEIGHT);
     window.set_size_request(MESSAGE_MIN_WINDOW_WIDTH, MESSAGE_MIN_WINDOW_HEIGHT);
@@ -68,7 +69,7 @@ pub(super) fn show_loading_message(
     spinner.start();
     container.append(&spinner);
 
-    container.append(&loading_message(source, flake));
+    container.append(&loading_message(source, flake, build_plan));
     let log = loading_log();
     container.append(log.widget());
 
@@ -79,12 +80,12 @@ pub(super) fn show_loading_message(
     log
 }
 
-fn loading_message(source: ReportSource, flake: &str) -> gtk::Box {
+fn loading_message(source: ReportSource, flake: &str, build_plan: bool) -> gtk::Box {
     let message = gtk::Box::new(gtk::Orientation::Horizontal, 0);
     message.add_css_class("loading-text");
     message.set_halign(gtk::Align::Center);
     message.append(&label(
-        "Building ",
+        if build_plan { "Planning " } else { "Building " },
         &["message-body", "loading", "loading-prefix"],
         0.0,
     ));

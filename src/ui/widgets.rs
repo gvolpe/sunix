@@ -32,6 +32,10 @@ pub(super) fn chooser_key_hints(show_demo: bool) -> gtk::Box {
     key_hints(&hints)
 }
 
+pub(super) fn plan_key_hints() -> gtk::Box {
+    key_hints(&[("Shift+M", "Home plan"), ("Shift+N", "NixOS plan")])
+}
+
 pub(super) fn report_key_hints(show_demo: bool, show_export: bool) -> gtk::Box {
     let mut hints = vec![
         ("↑ / K", "Scroll Up"),
